@@ -3,7 +3,7 @@ import type { Request,Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -11,24 +11,26 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto.email,dto.name, dto.password);
-  }
+   return this.authService.register(dto.name, dto.email, dto.password);
 
+  }
+//passthrough permet de modifier la reponse(cookies)
   @Post('login')
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const user = await this.authService.validateUser(dto.email, dto.password);
     if (!user) throw new UnauthorizedException('Credentials incorrectes');
-
+    //generate access et refresh tokens
     const tokens = await this.authService.getTokens({ id: user.id, email: user.email, role: user.role });
+    //store hashed refresh token(callin it from service)
     await this.authService.storeRefreshToken(user.id, tokens.refreshToken);
-
+   
     const cookieOptions = {
       httpOnly: true,
       sameSite: 'lax' as const,
       secure: process.env.NODE_ENV === 'production',
       path: '/',
     };
-
+    //sending cookies to the client
     res.cookie('access_token', tokens.accessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
     res.cookie('refresh_token', tokens.refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
@@ -46,7 +48,7 @@ export class AuthController {
     const valid = await this.authService.validateRefreshTokenAgainstDb(payload.sub, refreshToken);
     if (!valid) throw new UnauthorizedException('Refresh token invalide');
 
-   
+   //generating refresh tokens
     const tokens = await this.authService.getTokens({ id: payload.sub, email: payload.email, role: payload.role });
     await this.authService.storeRefreshToken(payload.sub, tokens.refreshToken);
 

@@ -9,7 +9,7 @@ import { ConfigModule } from '@nestjs/config';
 @Module({
   imports: [ ConfigModule.forRoot({
       isGlobal: true,
-    }),PrismaModule, UsersModule, AuthModule],
+    }),PrismaModule, UsersModule, AuthModule],//imported prismaModule a single time after adding global decorator on prismamodule file
   controllers: [AppController],
   providers: [AppService],
 })

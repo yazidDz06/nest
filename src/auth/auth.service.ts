@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
@@ -15,7 +15,17 @@ export class AuthService {
       const hash = await bcrypt.hash(password, 10);
       const user = await this.usersService.create({ email, name, password: hash });
       delete (user as any).password;
-      return user;
+       delete (user as any).refreshTokenHash;
+       return {
+    message: "Utilisateur créé avec succès",
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      createdAt: user.createdAt,
+    },
+  };
   }
    async validateUser(email: string, password: string) {
     const user = await this.usersService.findByEmail(email);
@@ -24,7 +34,8 @@ export class AuthService {
     if (!ok) return null;
     return user;
   }
-  //getting token
+  //getting token and signin token(sign in get secret and expiration from env file using config service)
+  //here i will sign only the token without a name for the cookie where it will be stored like express(the cookie's name on strategy file)
    async getTokens(user: { id: number; email: string; role?: string }) {
     const payload = { sub: user.id, email: user.email, role: user.role || 'USER' };
     const accessToken = await this.jwtService.signAsync(payload, {
