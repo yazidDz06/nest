@@ -4,10 +4,7 @@ import { Strategy } from 'passport-jwt';
 import { Request } from 'express';
 import { ConfigService } from '@nestjs/config';
 
-/**
- *  Cette fonction récupère le refresh_token depuis les cookies.
- * Elle retourne null si le cookie n'existe pas.
- */
+
 const cookieExtractor = (req: Request): string | null =>
   req?.cookies?.['refresh_token'] || null;
 
@@ -33,11 +30,8 @@ export class RefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
   }
 
   /**
-   * Cette méthode s'exécute UNIQUEMENT si le refresh token :
-   *  ✔ a une bonne signature
-   *  ✔ n'est pas expiré
-   *
-   * validate() permet ensuite de construire req.user
+    Cette méthode s'exécute UNIQUEMENT si le refresh token :
+    validate() permet ensuite de construire req.user
    */
   async validate(req: Request, payload: any) {
     /**
