@@ -7,7 +7,7 @@ import { ConfigService } from '@nestjs/config';
 const cookieExtractor = (req: Request) => req?.cookies?.['access_token'] || null;
 
 @Injectable()
-//here i will extract+verify jwt and making req.user
+//here i will extract+verify jwt and making req.user if validated but in refresh strategy we will also compare sotred token 
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private config: ConfigService) {
     super({

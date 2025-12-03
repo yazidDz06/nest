@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
@@ -6,73 +6,121 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
-   constructor(
+  constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
     private config: ConfigService,
   ) {}
-  async register(name:string, email:string, password:string){
-      const hash = await bcrypt.hash(password, 10);
-      const user = await this.usersService.create({ email, name, password: hash });
-      delete (user as any).password;
-       delete (user as any).refreshTokenHash;
-       return {
-    message: "Utilisateur créé avec succès",
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      createdAt: user.createdAt,
-    },
-  };
+
+  /**
+   * Enregistrement d'un utilisateur
+   * Hash le mot de passe avant de le stocker
+   */
+  async register(name: string, email: string, password: string) {
+    const hash = await bcrypt.hash(password, 10);
+    const user = await this.usersService.create({
+      name,
+      email,
+      password: hash,
+    });
+
+    // Supprimer le mot de passe et refreshTokenHash avant de renvoyer l'utilisateur
+    delete (user as any).password;
+    delete (user as any).refreshTokenHash;
+
+    return {
+      message: 'Utilisateur créé avec succès',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt,
+      },
+    };
   }
-   async validateUser(email: string, password: string) {
+
+  /**
+   * Vérifie que le mot de passe correspond à l'email
+   * Retourne l'utilisateur si ok
+   */
+  async validateUser(email: string, password: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user) return null;
-    const ok = await bcrypt.compare(password, user.password);
-    if (!ok) return null;
-    return user;
+
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) return null;
+
+     return {
+      message: 'Logged in successfuly',
+      user: {
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    };
   }
-  //getting token and signin token(sign in get secret and expiration from env file using config service)
-  //here i will sign only the token without a name for the cookie where it will be stored like express(the cookie's name on strategy file)
-   async getTokens(user: { id: number; email: string; role?: string }) {
-    const payload = { sub: user.id, email: user.email, role: user.role || 'USER' };
+
+  /**
+   * Génère Access Token (court) + Refresh Token (long)
+   */
+  async getTokens(user: { id: number; email: string; role?: string }) {
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role || 'USER',
+    };
+
+    // Access token : durée courte
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: this.config.get('JWT_ACCESS_SECRET'),
       expiresIn: this.config.get('JWT_ACCESS_EXPIRES') || '15m',
     });
+
+    // Refresh token : durée longue
     const refreshToken = await this.jwtService.signAsync(payload, {
       secret: this.config.get('JWT_REFRESH_SECRET'),
       expiresIn: this.config.get('JWT_REFRESH_EXPIRES') || '7d',
     });
+
     return { accessToken, refreshToken };
   }
-    // store refresh token hashé en DB (requires UsersService to implement updateRefreshToken)
+
+  /**
+   * Stocke le refresh token hashé dans la base
+   * Après chaque login ou refresh
+   */
   async storeRefreshToken(userId: number, refreshToken: string) {
     const hash = await bcrypt.hash(refreshToken, 10);
     await this.usersService.updateRefreshToken(userId, hash);
   }
 
+  /**
+   * Supprime le refresh token hashé (logout)
+   */
   async removeRefreshToken(userId: number) {
     await this.usersService.removeRefreshToken(userId);
   }
 
-  async verifyRefreshToken(refreshToken: string) {
-    try {
-      const payload = this.jwtService.verify(refreshToken, {
-        secret: this.config.get('JWT_REFRESH_SECRET'),
-      });
-      return payload;
-    } catch (e) {
-      return null;
-    }
-  }
-
+  /**
+   * Vérifie que le refresh token envoyé correspond au hash en DB(en service pas en strategy)
+   * Si invalide : ForbiddenException
+   */
   async validateRefreshTokenAgainstDb(userId: number, refreshToken: string) {
     const user = await this.usersService.findById(userId);
-    if (!user || !user.refreshTokenHash) return false;
-    const match = await bcrypt.compare(refreshToken, user.refreshTokenHash);
-    return match;
+
+    if (!user || !user.refreshTokenHash) {
+      throw new ForbiddenException('Access Denied');
+    }
+
+    const isMatch = await bcrypt.compare(refreshToken, user.refreshTokenHash);
+
+    if (!isMatch) {
+      throw new ForbiddenException('Access Denied');
+    }
+
+    // Tout est ok
+    return true;
   }
 }
+

@@ -1,78 +1,68 @@
-import { Controller, Post, Body, Res, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
-import type { Request,Response } from 'express';
+import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RtGuard } from './guards/rt-auth.guard';
+import { GetUser } from './decorators/get-user.decorator';
+import { UnauthorizedException } from '@nestjs/common';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('register')
-  async register(@Body() dto: RegisterDto) {
-   return this.authService.register(dto.name, dto.email, dto.password);
-
-  }
-//passthrough permet de modifier la reponse(cookies)
-  @Post('login')
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
-    const user = await this.authService.validateUser(dto.email, dto.password);
-    if (!user) throw new UnauthorizedException('Credentials incorrectes');
-    //generate access et refresh tokens
-    const tokens = await this.authService.getTokens({ id: user.id, email: user.email, role: user.role });
-    //store hashed refresh token(callin it from service)
-    await this.authService.storeRefreshToken(user.id, tokens.refreshToken);
-   
-    const cookieOptions = {
-      httpOnly: true,
-      sameSite: 'lax' as const,
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-    };
-    //sending cookies to the client
-    res.cookie('access_token', tokens.accessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
-    res.cookie('refresh_token', tokens.refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
-
-    return { message: 'Logged in' };
+  signup(@Body() dto: RegisterDto) {
+    return this.authService.register(dto.name, dto.email, dto.password);
   }
 
+
+ @Post('login')
+async signin(@Body() dto: LoginDto) {
+  const user = await this.authService.validateUser(dto.email, dto.password);
+
+  if (!user) {
+    throw new UnauthorizedException('Email or password incorrect');
+  }
+
+  return {
+    message: 'Logged in successfully',
+    user,
+  };
+}
+
+  // =========================
+  // REFRESH
+  // =========================
+  @UseGuards(RtGuard)
   @Post('refresh')
-  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const refreshToken = req.cookies?.['refresh_token'];
-    if (!refreshToken) throw new UnauthorizedException('No refresh token');
+  async refresh(@GetUser() user: { sub: number; email: string; role: string; refreshToken: string }) {
+    // Générer de nouveaux tokens
+    const tokens = await this.authService.getTokens({
+      id: user.sub,
+      email: user.email,
+      role: user.role,
+    });
 
-    const payload = await this.authService.verifyRefreshToken(refreshToken);
-    if (!payload) throw new UnauthorizedException('Invalid refresh token');
+    // Stocker le nouveau refresh token hashé
+    await this.authService.storeRefreshToken(user.sub, tokens.refreshToken);
 
-    const valid = await this.authService.validateRefreshTokenAgainstDb(payload.sub, refreshToken);
-    if (!valid) throw new UnauthorizedException('Refresh token invalide');
-
-   //generating refresh tokens
-    const tokens = await this.authService.getTokens({ id: payload.sub, email: payload.email, role: payload.role });
-    await this.authService.storeRefreshToken(payload.sub, tokens.refreshToken);
-
-    const cookieOptions = {
-      httpOnly: true,
-      sameSite: 'lax' as const,
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
+    // Retourner les tokens directement (ou gérer les cookies dans un interceptor)
+    return {
+      message: 'Tokens refreshed',
+      tokens,
     };
-
-    res.cookie('access_token', tokens.accessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
-    res.cookie('refresh_token', tokens.refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
-
-    return { message: 'Tokens refreshed' };
   }
 
-  @Post('logout')
+  // =========================
+  // LOGOUT
+  // =========================
   @UseGuards(JwtAuthGuard)
-  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const user = (req as any).user;
-    await this.authService.removeRefreshToken(user.sub);
-    res.clearCookie('access_token', { path: '/' });
-    res.clearCookie('refresh_token', { path: '/' });
+  @Post('logout')
+  async logout(@GetUser('sub') userId: number) {
+    await this.authService.removeRefreshToken(userId);
     return { message: 'Logged out' };
   }
 }
+
 
