@@ -74,7 +74,7 @@ export class AuthService {
     // Access token : durée courte
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: this.config.get('JWT_ACCESS_SECRET'),
-      expiresIn: this.config.get('JWT_ACCESS_EXPIRES') || '15m',
+      expiresIn: this.config.get('JWT_ACCESS_EXPIRES') || '15s',
     });
 
     // Refresh token : durée longue
