@@ -16,5 +16,6 @@ import { FilmModule } from './film/film.module';
     }),PrismaModule, UsersModule, AuthModule, CloudinaryModule, UploadModule, FilmModule],//imported prismaModule a single time after adding global decorator on prismamodule file
   controllers: [AppController],
   providers: [AppService],
+  
 })
 export class AppModule {}

@@ -34,10 +34,7 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  async signin(
-    @Body() dto: LoginDto,
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  async signin(@Body() dto: LoginDto,@Res({ passthrough: true }) res: Response) {
     // Validation credentials
     const validationResult = await this.authService.validateUser(
       dto.email,
