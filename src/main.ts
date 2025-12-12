@@ -3,12 +3,12 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import { HttpExceptionFilter } from './exceptionFilters/httpexception.filter';
-
+import { AllExceptionsFilter } from './exceptionFilters/allException.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
     app.useGlobalPipes( new ValidationPipe({ whitelist: true,forbidNonWhitelisted: true, transform: true}))
-    app.useGlobalFilters(new HttpExceptionFilter())
+    app.useGlobalFilters(new HttpExceptionFilter(), new AllExceptionsFilter())
     app.use(cookieParser())
    
   app.enableCors({
