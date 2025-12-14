@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Put, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Put, UseGuards, Req, UseInterceptors } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { LoggingInterceptor } from 'src/interceptors/custom.interceptor';
 
 @Controller('users')
 export class UsersController {
@@ -10,6 +11,7 @@ export class UsersController {
 
   // Route GET /users/me — profil du user authentifié
 @UseGuards(JwtAuthGuard)
+@UseInterceptors(LoggingInterceptor)//utilisation d'interceptor de logging pour mesurer temps de reponse
 @Get('me')
 async getMe(@Req() req) {
   const userId = req.user.sub;
