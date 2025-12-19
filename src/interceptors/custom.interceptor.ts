@@ -2,7 +2,7 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-//rxjs posséde sa propre documentation, possede plusieurs méthodes 
+//rxjs posséde sa propre documentation, possede plusieurs méthodes pour gestion de streaming asynchrones
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
   //executionContext pour lire contexte de req ou res ou ..

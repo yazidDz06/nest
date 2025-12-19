@@ -6,8 +6,11 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { CACHE_MANAGER, CacheInterceptor } from '@nestjs/cache-manager';
 
-@Controller('film')
+
+@UseInterceptors(CacheInterceptor)
+@Controller('films')
 export class FilmController {
   constructor(private readonly filmService: FilmService,
     private readonly cloudinaryService: CloudinaryService
@@ -27,8 +30,10 @@ export class FilmController {
     return this.filmService.create(dto, userId, thumbnailUrl);
   }
 
+  //@CachKey //c'est optionnel pour que key de redis ne prend pas route comme nom de clé
   @Get()
   findAll() {
+    console.log("inside controller")
     return this.filmService.findAll();
   }
 

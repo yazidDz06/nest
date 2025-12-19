@@ -26,7 +26,7 @@ async getMe(@Req() req) {
 
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(['ADMIN'])
+  @Roles(['USER'])
   @Get('/all')
   findAll() {
     return this.usersService.findAll();
