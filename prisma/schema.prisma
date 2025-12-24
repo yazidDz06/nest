@@ -9,23 +9,60 @@ datasource db {
 }
 
 model User {
-  id                Int      @id @default(autoincrement())
-  email             String   @unique
-  name              String
-  password          String
-  role              String   @default("USER")
-  refreshTokenHash  String?  // stocker le hash du refresh token pour l'invalidation
-  createdAt         DateTime @default(now())
-  films             Film[]
+  id               Int      @id @default(autoincrement())
+  email            String   @unique
+  name             String
+  password         String
+  role             String   @default("USER")
+  refreshTokenHash String?
+  createdAt        DateTime @default(now())
+
+  filmsAuthored    Film[]
+  purchases        Purchase[]
 }
 
+
 model Film {
-  id          Int      @id @default(autoincrement())
-  titre       String
-  description String
-  year        Int
-  thumbnailUrl String?    // optionnel car upload séparé
-  userId      Int
-  author      User     @relation(fields: [userId], references: [id])
-   createdAt         DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  titre          String
+  description    String
+  year           Int
+  thumbnailUrl   String?
+
+  price          Int      // centimes (affichage)
+  currency       String   @default("EUR")
+
+  stripePriceId  String?  // source de vérité
+  isPublished    Boolean  @default(true)
+
+  authorId       Int?
+  author         User?     @relation(fields: [authorId], references: [id])
+
+  purchases      Purchase[]
+
+  createdAt      DateTime @default(now())
+}
+
+model Purchase {
+  id               Int      @id @default(autoincrement())
+
+  userId           Int
+  filmId           Int
+
+  stripeSessionId  String   @unique
+  stripePaymentId  String?
+
+  status           PaymentStatus @default(PENDING)
+
+  user             User     @relation(fields: [userId], references: [id])
+  film             Film     @relation(fields: [filmId], references: [id])
+
+  createdAt        DateTime @default(now())
+
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
 }

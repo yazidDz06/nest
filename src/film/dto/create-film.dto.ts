@@ -1,17 +1,36 @@
-import { IsNotEmpty, IsInt, Min, Max, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsInt, Min } from 'class-validator';
 
 export class CreateFilmDto {
   @IsNotEmpty()
+  @IsString()
   titre: string;
 
-  @IsNotEmpty()
+  @IsOptional()
+  @IsString()
   description: string;
 
-  @Min(1900)
-  @Max(2100)
+  @IsNotEmpty()
+  @IsInt()
+  @Min(1800)
   year: number;
 
   @IsOptional()
-  thumbnailUrl?: string; 
-}
+  @IsString()
+  thumbnailUrl?: string;
 
+  @IsNotEmpty()
+  @IsInt()
+  price: number; // centimes
+
+  @IsOptional()
+  @IsString()
+  currency?: string;
+
+  @IsOptional()
+  @IsString()
+  stripePriceId?: string;
+
+  @IsOptional()
+  isPublished?: boolean;
+
+}

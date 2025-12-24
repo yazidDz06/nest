@@ -1,20 +1,14 @@
-// stripe.service.ts
-import { Injectable } from '@nestjs/common';
+// src/stripe/stripe.service.ts
 import Stripe from 'stripe';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class StripeService {
-  private stripe: Stripe;
+  public readonly client: Stripe;
 
   constructor() {
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-  }
-
-  async createPaymentIntent(amount: number) {
-    return this.stripe.paymentIntents.create({
-      amount,
-      currency: 'usd',
-      automatic_payment_methods: { enabled: true },
+    this.client = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: '2025-11-17.clover',
     });
   }
 }
