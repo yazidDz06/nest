@@ -17,6 +17,8 @@ import { WebhooksController } from './webhooks/webhooks.controller';
 import { PaymentsModule } from './payement/payement.module';
 import { PurschasesService } from './purschases/purschases.service';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { NotificationsModule } from './notifications/notifications.module';
+
 
 @Module({
   imports: [
@@ -47,7 +49,8 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     FilmModule,
     StripeModule,
     WebhooksModule,
-    PaymentsModule
+    PaymentsModule,
+    NotificationsModule,
   ],
   controllers: [AppController, WebhooksController],
   providers: [AppService, WebhooksService, PurschasesService],

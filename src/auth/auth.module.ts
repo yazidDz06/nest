@@ -29,7 +29,8 @@ import { RefreshStrategy } from './strategies/refresh.strategy';
   ],
   exports: [
     PassportModule,
-    JwtStrategy, 
+    JwtStrategy,
+    JwtModule 
   ],
 })
 export class AuthModule {}
