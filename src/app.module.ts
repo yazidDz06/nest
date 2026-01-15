@@ -17,7 +17,7 @@ import { WebhooksController } from './webhooks/webhooks.controller';
 import { PaymentsModule } from './payement/payement.module';
 import { PurschasesService } from './purschases/purschases.service';
 import { WebhooksModule } from './webhooks/webhooks.module';
-import { NotificationsModule } from './notifications/notifications.module';
+import { NotificationsModule } from './chat/chat.module';
 
 
 @Module({
