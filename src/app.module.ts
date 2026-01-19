@@ -11,13 +11,11 @@ import { FilmModule } from './film/film.module';
 import { StripeModule } from './stripe/stripe.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
-
-import { WebhooksService } from './webhooks/webhooks.service';
-import { WebhooksController } from './webhooks/webhooks.controller';
 import { PaymentsModule } from './payement/payement.module';
-import { PurschasesService } from './purschases/purschases.service';
 import { WebhooksModule } from './webhooks/webhooks.module';
-import { NotificationsModule } from './chat/chat.module';
+
+import { PurchasesModule } from './purschases/purschases.module';
+import { ChatModule } from './chat/chat.module';
 
 
 @Module({
@@ -50,9 +48,10 @@ import { NotificationsModule } from './chat/chat.module';
     StripeModule,
     WebhooksModule,
     PaymentsModule,
-    NotificationsModule,
+    ChatModule,
+    PurchasesModule
   ],
-  controllers: [AppController, WebhooksController],
-  providers: [AppService, WebhooksService, PurschasesService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
