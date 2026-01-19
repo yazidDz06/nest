@@ -10,14 +10,14 @@ export class PaymentsService {
   ) {}
 
   async createCheckout(userId: number, filmId: number) {
-    // 1️⃣ Récupérer le film
+    //  Récupérer le film
     const film = await this.prisma.film.findUnique({ where: { id: filmId } });
 
     if (!film || !film.isPublished) {
       throw new NotFoundException('Film indisponible');
     }
 
-    // 2️⃣ Vérifier qu’un prix Stripe existe, sinon le créer
+    //  Vérifier qu’un prix Stripe existe, sinon le créer
     let stripePriceId = film.stripePriceId;
     if (!stripePriceId) {
       try {
@@ -49,7 +49,7 @@ export class PaymentsService {
       throw new InternalServerErrorException('stripePriceId invalide en base');
     }
 
-    // 3️⃣ Vérifier si l’utilisateur a déjà un achat en cours ou payé
+    //  Vérifier si l’utilisateur a déjà un achat en cours ou payé
     const existingPurchase = await this.prisma.purchase.findFirst({
       where: {
         userId,
@@ -69,7 +69,7 @@ export class PaymentsService {
       };
     }
 
-    // 4️⃣ Créer la session Stripe Checkout
+    //  Créer la session Stripe Checkout
     const session = await this.stripe.client.checkout.sessions.create({
       mode: 'payment',
       line_items: [{ price: stripePriceId, quantity: 1 }],
@@ -81,7 +81,7 @@ export class PaymentsService {
       cancel_url: 'https://example.com/cancel',
     });
 
-    // 5️⃣ Enregistrer l’achat dans la base
+    //  Enregistrer l’achat dans la base
   await this.prisma.purchase.create({
   data: {
     userId, //  pas undefined
@@ -91,7 +91,7 @@ export class PaymentsService {
   },
 });
 
-    // 6️⃣ Retourner au futur frontend
+    //  Retourner au futur frontend
     return {
       sessionId: session.id,
       checkoutUrl: session.url ?? undefined,
