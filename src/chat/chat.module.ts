@@ -8,6 +8,7 @@ import { SocketIoService } from './ws.service';
 
 @Module({
   providers: [ChatGateway, ChatService, WsJwtGuard, SocketIoService],
- imports: [AuthModule]
+ imports: [AuthModule],
+ exports: [SocketIoService,WsJwtGuard]
 })
 export class ChatModule {}

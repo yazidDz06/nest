@@ -16,6 +16,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 
 import { PurchasesModule } from './purschases/purschases.module';
 import { ChatModule } from './chat/chat.module';
+import { StatsModule } from './stats/stats.module';
 
 
 @Module({
@@ -49,7 +50,8 @@ import { ChatModule } from './chat/chat.module';
     WebhooksModule,
     PaymentsModule,
     ChatModule,
-    PurchasesModule
+    PurchasesModule,
+    StatsModule
   ],
   controllers: [AppController],
   providers: [AppService],
