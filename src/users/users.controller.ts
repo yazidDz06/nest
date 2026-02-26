@@ -1,49 +1,61 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Put, UseGuards, Req, UseInterceptors } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { LoggingInterceptor } from 'src/interceptors/custom.interceptor';
+import { Controller, Get, Patch, Delete, Param, Body, UseGuards, HttpCode, HttpStatus, ParseIntPipe } from '@nestjs/common'
+import { UsersService } from './users.service'
+import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard'
+import { RolesGuard } from 'src/auth/guards/roles.guard'
+import { Roles } from 'src/auth/decorators/roles.decorator'
+import { GetCurrentUser } from 'src/auth/decorators/getCurrentUser.decorator'
+import { Role } from '@prisma/client'
+import { UpdateProfileDto } from './dto/update-profile.dto'
+import { UpdateStatusDto } from './dto/update-status.dto'
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  // Route GET /users/me — profil du user authentifié
-@UseGuards(JwtAuthGuard)
-@UseInterceptors(LoggingInterceptor)//utilisation d'interceptor de logging pour mesurer temps de reponse
-@Get('me')
-async getMe(@Req() req) {
-  const userId = req.user.sub;
-  const user = await this.usersService.findById(userId);
+  @UseGuards(AccessTokenGuard)
+  @Get('me')
+  getMe(@GetCurrentUser('sub') userId: number) {
+    return this.usersService.findById(userId)
+  }
 
-  // Supprimer les champs sensibles
-  delete (user as any).password;
-  delete (user as any).refreshTokenHash;
-
-  return user;
-}
-
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(['USER'])
-  @Get('/all')
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Get()
   findAll() {
-    return this.usersService.findAll();
+    return this.usersService.findAll()
   }
 
-
-  @UseGuards(JwtAuthGuard)
-  @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.findOne(id);
+  @UseGuards(AccessTokenGuard)
+  @Patch('me')
+  updateMe(
+    @GetCurrentUser('sub') userId: number,
+    @Body() dto: UpdateProfileDto,
+  ) {
+    return this.usersService.updateProfile(userId, dto)
   }
 
-@UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(['USER'])
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Patch(':id/status')
+  updateStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateStatusDto,
+  ) {
+    return this.usersService.updateStatus(id, dto)
+  }
+
+  @UseGuards(AccessTokenGuard)
+  @Delete('me')
+  @HttpCode(HttpStatus.OK)
+  deleteMe(@GetCurrentUser('sub') userId: number) {
+    return this.usersService.deleteUser(userId)
+  }
+  
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.remove(id);
+  @HttpCode(HttpStatus.OK)
+  deleteUser(@Param('id', ParseIntPipe) id: number) {
+    return this.usersService.deleteUser(id)
   }
 }
-

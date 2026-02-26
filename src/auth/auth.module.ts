@@ -1,18 +1,17 @@
-import { Module } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
-import { JwtModule } from '@nestjs/jwt';
-import { UsersModule } from 'src/users/users.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { PassportModule } from '@nestjs/passport';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import { RefreshStrategy } from './strategies/refresh.strategy';
+import { Module } from '@nestjs/common'
+import { JwtModule } from '@nestjs/jwt'
+import { PassportModule } from '@nestjs/passport'
+import { ConfigModule, ConfigService } from '@nestjs/config'
+import { AuthenticationController } from './auth.controller'
+import { AuthenticationService } from './auth.service'
+import { UsersModule } from 'src/users/users.module'
+import { AccessTokenStrategy } from './strategies/accessToken.strategy'
+import { RefreshTokenStrategy } from './strategies/refreshToken.strategy'
 
 @Module({
   imports: [
     UsersModule,
-    PassportModule.register({ defaultStrategy: 'jwt' }),
-
+    PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -21,17 +20,8 @@ import { RefreshStrategy } from './strategies/refresh.strategy';
       }),
     }),
   ],
-  controllers: [AuthController],
-  providers: [
-    AuthService,
-    JwtStrategy,
-    RefreshStrategy //  OBLIGATOIRE(pour les routes protégés)
-  ],
-  exports: [
-    PassportModule,
-    JwtStrategy,
-    JwtModule 
-  ],
+  controllers: [AuthenticationController],
+  providers: [AuthenticationService, AccessTokenStrategy, RefreshTokenStrategy],
 })
-export class AuthModule {}
+export class AuthenticationModule {}
 

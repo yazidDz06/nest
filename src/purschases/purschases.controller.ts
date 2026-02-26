@@ -1,8 +1,8 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
 import { PurchasesService } from './purschases.service';
-import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { GetCurrentUser } from 'src/auth/decorators/getCurrentUser.decorator';
 
 
 @Controller('achats')
@@ -11,8 +11,8 @@ export class PurchasesController {
 
   
   @Get('mes-achats')
-  @UseGuards(JwtAuthGuard)
-  async getMyPurchases(@GetUser() user: any) {
+  @UseGuards(AccessTokenGuard)
+  async getMyPurchases(@GetCurrentUser() user: any) {
     return this.purchasesService.findByUser(user.userId);
   }
 }

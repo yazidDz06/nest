@@ -1,4 +1,5 @@
-import { Reflector } from '@nestjs/core';
+import { SetMetadata } from '@nestjs/common'
+import { Role } from '@prisma/client'
 
-export const Roles = Reflector.createDecorator<string[]>();
-//this is the new way from nest v10+
+export const ROLES_KEY = 'roles'
+export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles)

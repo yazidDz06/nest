@@ -14,7 +14,7 @@ import { StatsService } from './stats.service';
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: 'http://localhost:3000',
     credentials: true,
   },
 })

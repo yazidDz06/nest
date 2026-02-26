@@ -1,8 +1,8 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { PaymentsService } from './payement.service';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
+import { GetCurrentUser } from 'src/auth/decorators/getCurrentUser.decorator';
 import { WebhooksService } from 'src/webhooks/webhooks.service';
 import { Req } from '@nestjs/common';
 
@@ -16,7 +16,7 @@ export class PaymentsController {
 
   //j'utilise aussi mon custom decorateur pour recuperer utilisateur connecté
   @Post('checkout')
-  create(@GetUser() user, @Body() dto: CreateCheckoutDto) {
+  create(@GetCurrentUser() user, @Body() dto: CreateCheckoutDto) {
     return this.payments.createCheckout(user.id, dto.filmId);
   }
 

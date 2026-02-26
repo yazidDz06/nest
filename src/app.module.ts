@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma.module';
 import { UsersModule } from './users/users.module';
-import { AuthModule } from './auth/auth.module';
+import { AuthenticationModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config'; 
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { UploadModule } from './upload/upload.module';
@@ -42,7 +42,7 @@ import { StatsModule } from './stats/stats.module';
 
     PrismaModule,
     UsersModule,
-    AuthModule,
+    AuthenticationModule,
     CloudinaryModule,
     UploadModule,
     FilmModule,

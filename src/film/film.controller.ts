@@ -2,11 +2,10 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, UseI
 import { FilmService } from './film.service';
 import { CreateFilmDto } from './dto/create-film.dto';
 import { UpdateFilmDto } from './dto/update-film.dto';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CACHE_MANAGER, CacheInterceptor } from '@nestjs/cache-manager';
+import { GetCurrentUser } from 'src/auth/decorators/getCurrentUser.decorator';
 
 
 @UseInterceptors(CacheInterceptor)
@@ -16,10 +15,10 @@ export class FilmController {
     private readonly cloudinaryService: CloudinaryService
   ) {}
 
-  @UseGuards(JwtAuthGuard)
+  
   @Post()
   @UseInterceptors(FileInterceptor('thumbnail'))
-  async create(@Body() dto: CreateFilmDto,@UploadedFile() file: Express.Multer.File, @GetUser('sub') userId: number,
+  async create(@Body() dto: CreateFilmDto,@UploadedFile() file: Express.Multer.File, @GetCurrentUser('sub') userId: number,
   ) {
     let thumbnailUrl: string | undefined
 

@@ -1,95 +1,98 @@
-import { Inject, Injectable } from '@nestjs/common';
-import type { Cache } from 'cache-manager';
-import { PrismaService } from 'src/prisma.service';
+import { Injectable } from '@nestjs/common'
+import { PrismaService } from 'src/prisma.service'
+import { UpdateProfileDto } from './dto/update-profile.dto'
+import { UpdateStatusDto } from './dto/update-status.dto'
+
+const publicUserSelect = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  statusUser: true,
+  createdAt: true,
+ } as const
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService,
-    @Inject('CACHE_MANAGER') private cacheManager: Cache
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
-  async create(userData: { name: string; email: string; password: string }) {
-    await this.cacheManager.del('users_list');
+  findByEmail(email: string) {
+    // no select here cause we need it for auth
+    return this.prisma.user.findUnique({ where: { email } })
+  }
+
+  create(userData: { name: string; email: string; password: string }) {
     return this.prisma.user.create({
       data: {
         name: userData.name,
         email: userData.email,
-        password: userData.password
+        password: userData.password,
       },
-    });
+      select: publicUserSelect,
+    })
   }
 
- async findAll() {
-  const cacheKey = 'users_list'; 
-  const cachedData = await this.cacheManager.get(cacheKey);
-
-  //  Si on a des données en cache, on les renvoie direct
-  if (cachedData) {
-    console.log('Données récupérées depuis le CACHE');
-    return cachedData;
-  }
-
-  //  Si pas de cache, on va en DB
-  console.log('Données récupérées depuis la DB');
-  const users = await this.prisma.user.findMany({
-    select: {
-      id: true,
-      name: true,
-      email: true,
-    },
-  });
-
-
-  await this.cacheManager.set(cacheKey, users);
-
-  return users;
-}
-
-  findOne(id: number) {
+  findById(id: number) {
     return this.prisma.user.findUnique({
       where: { id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-      },
-    });
+      select: publicUserSelect,
+    })
   }
 
-  async findById(id: number) {
-    return this.prisma.user.findUnique({
-      where: { id },
-    });
+  findAll() {
+    return this.prisma.user.findMany({
+      select: publicUserSelect,
+    })
   }
 
-  async findByEmail(email: string) {
-    return this.prisma.user.findUnique({
-      where: { email },
-    });
-  }
-
-  remove(id: number) {
-    return this.prisma.user.delete({
-      where: { id },
-    });
-  }
-
-  async updateRefreshToken(userId: number, hashedToken: string) {
+  async updateRefreshToken(userId: number, hash: string | null) {
     return this.prisma.user.update({
       where: { id: userId },
-      data: { refreshTokenHash: hashedToken },
-    });
+      data: { refreshTokenHash: hash },
+      select: publicUserSelect,
+    })
   }
 
   async removeRefreshToken(userId: number) {
     return this.prisma.user.update({
       where: { id: userId },
       data: { refreshTokenHash: null },
-    });
+      select: publicUserSelect,
+    })
   }
+
+  async updateProfile(userId: number, dto: UpdateProfileDto) {
+    if (dto.password) {
+      const bcrypt = await import('bcrypt')
+      dto.password = await bcrypt.hash(dto.password, 10)
+    }
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: dto,
+      select: publicUserSelect,
+    })
+  }
+
+  updateStatus(userId: number, dto: UpdateStatusDto) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { statusUser: dto.statusUser },
+      select: publicUserSelect,
+    })
+  }
+
+  deleteUser(userId: number) {
+    return this.prisma.user.delete({
+      where: { id: userId },
+    })
+  }
+  findByIdWithRefreshToken(id: number) {
+  return this.prisma.user.findUnique({
+    where: { id },
+    select: {
+      ...publicUserSelect,
+      refreshTokenHash: true, 
+    }
+  })
 }
-
-
-//ici injection manuelle de cache pour gerer la suppression de cache a la supression et aussi 
-//recuperer premiere fois depuis la db et autre fois depuis le cache 
-//j'ai utilisé interceptor cache dans film controller , c'est la methode rapide mais moins robuste
+}
